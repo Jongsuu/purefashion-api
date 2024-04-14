@@ -1,0 +1,6 @@
+@PureFashionAPI_HostAddress = http://localhost:5277
+
+GET {{PureFashionAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
