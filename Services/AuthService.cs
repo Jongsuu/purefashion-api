@@ -28,7 +28,7 @@ namespace PureFashion.Services.Authentication
         public async Task<dtoActionResponse<dtoUser>> Login(dtoUserLogin userLogin)
         {
             dtoActionResponse<dtoUser> response = new dtoActionResponse<dtoUser>();
-            dtoUserEntity? user = await GetUser(userLogin.email);
+            dtoUserEntity? user = await GetUserByEmail(userLogin.email);
 
             if (user is null)
             {
@@ -93,6 +93,27 @@ namespace PureFashion.Services.Authentication
             return response;
         }
 
+        public async Task<dtoUserEntity?> GetUserById(string? id)
+        {
+            if (id == null)
+                return null;
+
+            dtoUserEntity? userEntity;
+
+            try
+            {
+                userEntity = await usersCollection
+                    .Find(item => item.id == id)
+                    .FirstOrDefaultAsync();
+            }
+            catch (Exception)
+            {
+                userEntity = null;
+            }
+
+            return userEntity;
+        }
+
         private async Task<dtoActionResponse<string?>> AddUser(dtoUserEntity user)
         {
             dtoActionResponse<string?> response = new dtoActionResponse<string?>();
@@ -117,7 +138,7 @@ namespace PureFashion.Services.Authentication
             return response;
         }
 
-        private async Task<dtoUserEntity?> GetUser(string email)
+        private async Task<dtoUserEntity?> GetUserByEmail(string email)
         {
             dtoUserEntity? userEntity = null;
             string emailL = email.ToLower();
@@ -182,7 +203,7 @@ namespace PureFashion.Services.Authentication
         {
             List<Claim> claims = new List<Claim> {
                 new Claim(ClaimTypes.NameIdentifier, user.id!),
-                    new Claim(ClaimTypes.Name, user.username)
+                new Claim(ClaimTypes.Name, user.username)
             };
 
             string? appSettingsToken = _configuration.GetSection("AppSettings:Token").Value;

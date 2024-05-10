@@ -5,6 +5,7 @@ namespace PureFashion.Models.Response
     public class dtoListResponse<T> : dtoResponseError
     {
         public List<T> data { get; set; } = new List<T>();
+        public long resultsCount { get; set; }
     }
 
     public class dtoActionResponse<T> : dtoResponseError
@@ -15,7 +16,7 @@ namespace PureFashion.Models.Response
     public class dtoResponseError
     {
         public dtoResponseMessageCodes? error { get; set; }
-        public string? message { get; set; } = string.Empty;
+        public string? message { get; set; }
     }
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
@@ -26,5 +27,20 @@ namespace PureFashion.Models.Response
         WRONG_PASSWORD,
         NOT_EXISTS,
         OPERATION_NOT_PERFORMED
+    }
+
+    public class dtoListFilter
+    {
+        public int pageIndex { get; set; }
+        public int pageSize { get; set; }
+        public string? sortField { get; set; }
+        public dtoListFilterSort? sortOrder { get; set; }
+    }
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum dtoListFilterSort
+    {
+        asc,
+        desc
     }
 }

@@ -8,5 +8,6 @@ namespace PureFashion.Services.Authentication
     {
         public Task<dtoActionResponse<dtoUser>> Register(dtoUserRegister userRegister);
         public Task<dtoActionResponse<dtoUser>> Login(dtoUserLogin userLogin);
+        public Task<dtoUserEntity?> GetUserById(string? id);
     }
 }

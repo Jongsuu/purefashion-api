@@ -24,7 +24,10 @@ namespace PureFashion.Controllers
         {
             dtoActionResponse<dtoUser> response = await authService.Login(userLogin);
 
-            if (response.error == dtoResponseMessageCodes.NOT_EXISTS || response.error == dtoResponseMessageCodes.WRONG_PASSWORD)
+            if (response.error == dtoResponseMessageCodes.NOT_EXISTS)
+                return NotFound(response);
+
+            if (response.error == dtoResponseMessageCodes.WRONG_PASSWORD)
                 return BadRequest(response);
 
             return Ok(response);
