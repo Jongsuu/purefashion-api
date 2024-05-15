@@ -29,10 +29,14 @@ namespace PureFashion.Models.Response
         OPERATION_NOT_PERFORMED
     }
 
-    public class dtoListFilter
+    public class dtoPaginationFilter
     {
         public int pageIndex { get; set; }
         public int pageSize { get; set; }
+    }
+
+    public class dtoListFilter : dtoPaginationFilter
+    {
         public string? sortField { get; set; }
         public dtoListFilterSort? sortOrder { get; set; }
     }

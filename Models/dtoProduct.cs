@@ -31,7 +31,7 @@ namespace PureFashion.Models.Product
         public string imageUrl { get; set; } = string.Empty;
     }
 
-    public class dtoProductListItem
+    public class dtoProductData
     {
         [BsonElement("productId")]
         public int productId { get; set; }
@@ -47,8 +47,17 @@ namespace PureFashion.Models.Product
 
         [BsonElement("category")]
         public string category { get; set; } = string.Empty;
+    }
 
+    public class dtoProductCartData : dtoProductData
+    {
+        public DateTime addedDate { get; set; }
+    }
+
+    public class dtoProductListItem : dtoProductData
+    {
         public int reviewCount { get; set; }
+
         public double reviewAverage { get; set; }
     }
 
@@ -71,7 +80,6 @@ namespace PureFashion.Models.Product
         public string authorId { get; set; } = string.Empty;
 
         public List<dtoReviewEntity> reviews { get; set; } = new List<dtoReviewEntity>();
-
         public bool inCart { get; set; }
     }
 }

@@ -6,6 +6,7 @@ using PureFashion.Models.Product;
 using PureFashion.Models.User;
 using PureFashion.Models.Review;
 using PureFashion.Models.Cart;
+using System.Text.Json;
 
 namespace PureFashion.Services.Product
 {
@@ -145,11 +146,6 @@ namespace PureFashion.Services.Product
             return response;
         }
 
-        public Task<dtoListResponse<dtoReviewItem>> GetProductReviews(int productId)
-        {
-            throw new NotImplementedException();
-        }
-
         public async Task<dtoActionResponse<bool>> CreateProduct(dtoProductItem newProduct, string authorId)
         {
             dtoActionResponse<bool> response = new dtoActionResponse<bool>();
@@ -183,6 +179,46 @@ namespace PureFashion.Services.Product
             return response;
         }
 
+        public async Task<dtoListResponse<dtoProductCartData>> GetProductsFromCart(dtoPaginationFilter filter, string userId)
+        {
+            dtoListResponse<dtoProductCartData> response = new dtoListResponse<dtoProductCartData>();
+
+            try
+            {
+                var matchFilter = Builders<dtoCartEntity>.Filter.Eq(p => p.userId, userId);
+
+                var cartQuery = cartCollection
+                    .Find(matchFilter)
+                    .SortByDescending(item => item.addedDate);
+
+                long resultsCount = await cartQuery.CountDocumentsAsync();
+
+                var products = await cartQuery
+                    .Skip(filter.pageIndex * filter.pageSize)
+                    .Limit(filter.pageSize)
+                    .Project(p => new dtoProductCartData
+                    {
+                        productId = p.product.productId,
+                        name = p.product.name,
+                        image = p.product.image,
+                        category = p.product.category,
+                        price = p.product.price,
+                        addedDate = p.addedDate
+                    })
+                    .ToListAsync();
+
+                response.data = products;
+                response.resultsCount = resultsCount;
+            }
+            catch (Exception)
+            {
+                response.error = dtoResponseMessageCodes.DATABASE_OPERATION;
+                response.message = "There was an error fetching the cart data";
+            }
+
+            return response;
+        }
+
         public async Task<dtoActionResponse<bool>> AddProductToCart(int productId, string userId)
         {
             dtoActionResponse<bool> response = new dtoActionResponse<bool>();
@@ -201,7 +237,8 @@ namespace PureFashion.Services.Product
                 }
 
                 dtoCartEntity? dbCart = await cartCollection
-                    .Find(c => c.productId == productId && c.userId == c.userId)
+                    .Find(Builders<dtoCartEntity>.Filter.Eq(c => c.product.productId, productId)
+                    & Builders<dtoCartEntity>.Filter.Eq(c => c.userId, userId))
                     .FirstOrDefaultAsync();
 
                 if (dbCart != null)
@@ -213,8 +250,16 @@ namespace PureFashion.Services.Product
 
                 dtoCartEntity addToCart = new dtoCartEntity
                 {
-                    productId = productId,
-                    userId = userId
+                    product = new dtoProductData
+                    {
+                        productId = product.productId,
+                        name = product.name,
+                        price = product.price,
+                        category = product.category,
+                        image = product.image
+                    },
+                    userId = userId,
+                    addedDate = DateTime.UtcNow
                 };
 
                 await this.cartCollection.InsertOneAsync(addToCart);
@@ -254,7 +299,7 @@ namespace PureFashion.Services.Product
                 }
 
                 DeleteResult deleteResult = await cartCollection
-                    .DeleteOneAsync(c => c.productId == productId && c.userId == c.userId);
+                    .DeleteOneAsync(c => c.product.productId == productId && c.userId == c.userId);
 
                 if (deleteResult.DeletedCount == 0)
                 {
@@ -282,7 +327,7 @@ namespace PureFashion.Services.Product
             try
             {
                 dtoCartEntity? cartItem = await cartCollection
-                    .Find(c => c.productId == productId && c.userId == userId)
+                    .Find(c => c.product.productId == productId && c.userId == userId)
                     .FirstOrDefaultAsync();
                 return cartItem != null;
             }
