@@ -9,5 +9,6 @@ namespace PureFashion.Models.DatabaseSettings
         public string ProductsCollectionName { get; set; } = null!;
         public string ReviewsCollectionName { get; set; } = null!;
         public string CartCollectionName { get; set; } = null!;
+        public string OrdersCollectionName { get; set; } = null!;
     }
 }

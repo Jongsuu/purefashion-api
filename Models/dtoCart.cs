@@ -4,6 +4,11 @@ using PureFashion.Models.Product;
 
 namespace PureFashion.Models.Cart
 {
+    public class dtoProductCartData : dtoProductData
+    {
+        public DateTime addedDate { get; set; }
+    }
+
     public class dtoCartEntity
     {
         [BsonId]

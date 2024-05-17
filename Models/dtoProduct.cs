@@ -49,11 +49,6 @@ namespace PureFashion.Models.Product
         public string category { get; set; } = string.Empty;
     }
 
-    public class dtoProductCartData : dtoProductData
-    {
-        public DateTime addedDate { get; set; }
-    }
-
     public class dtoProductListItem : dtoProductData
     {
         public int reviewCount { get; set; }
