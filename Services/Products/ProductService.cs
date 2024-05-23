@@ -83,7 +83,7 @@ namespace PureFashion.Services.Product
             return response;
         }
 
-        public async Task<dtoActionResponse<dtoProductEntity?>> GetProductDetail(int productId, string? userId)
+        public async Task<dtoActionResponse<dtoProductEntity?>> GetProductDetail(string productId, string? userId)
         {
             dtoActionResponse<dtoProductEntity?> response = new dtoActionResponse<dtoProductEntity?>();
 
@@ -97,12 +97,6 @@ namespace PureFashion.Services.Product
                                 p => p.author);
 
                 var unwind = PipelineStageDefinitionBuilder.Unwind<dtoProductEntity, dtoProductEntity>(p => p.author);
-
-                var reviewLookup = PipelineStageDefinitionBuilder.Lookup<dtoProductEntity, dtoReviewEntity, dtoProductEntity>(
-                                reviewCollection,
-                                p => p.productId,
-                                r => r.productId,
-                                p => p.reviews);
 
                 var projection = PipelineStageDefinitionBuilder.Project<dtoProductEntity, dtoProductEntity>(
                         Builders<dtoProductEntity>.Projection.Expression(p => new dtoProductEntity
@@ -153,14 +147,9 @@ namespace PureFashion.Services.Product
             {
                 dtoProductEntity newItem = (dtoProductEntity)newProduct;
                 newItem.authorId = authorId;
-                dtoProductEntity? last = await productsCollection
-                    .Find(Builders<dtoProductEntity>.Filter.Empty)
-                    .SortByDescending(item => item.productId)
-                    .FirstOrDefaultAsync();
-                newItem.productId = last != null ? last.productId + 1 : 1;
                 await productsCollection.InsertOneAsync(newItem);
 
-                if (newItem.id == null)
+                if (newItem.productId == null)
                 {
                     response.data = false;
                     response.error = dtoResponseMessageCodes.OPERATION_NOT_PERFORMED;
@@ -178,7 +167,7 @@ namespace PureFashion.Services.Product
             return response;
         }
 
-        private async Task<bool> IsProductInCart(int productId, string? userId)
+        private async Task<bool> IsProductInCart(string productId, string? userId)
         {
             if (userId == null)
                 return false;
@@ -225,7 +214,6 @@ namespace PureFashion.Services.Product
         {
             try
             {
-                // var pipeline = new EmptyPipelineDefinition<dtoReviewEntity>()
                 var productReviewData = await reviewCollection
                 .Aggregate()
                 .Match(Builders<dtoReviewEntity>.Filter.Eq(r => r.productId, product.productId))

@@ -31,7 +31,8 @@ namespace PureFashion.Models.Review
         public string? id { get; set; }
 
         [BsonElement("productId")]
-        public int productId { get; set; }
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string productId { get; set; }
 
         [BsonElement("userId")]
         [BsonRepresentation(BsonType.ObjectId)]

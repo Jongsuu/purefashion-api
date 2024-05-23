@@ -29,9 +29,6 @@ namespace PureFashion.Controllers
         {
             dtoListResponse<dtoProductListItem> response = await productService.GetAllProducts(JsonSerializer.Deserialize<dtoProductListFilter>(filter)!);
 
-            if (response.error == dtoResponseMessageCodes.NOT_EXISTS)
-                return BadRequest(response);
-
             if (response.error == dtoResponseMessageCodes.DATABASE_OPERATION)
                 return StatusCode(StatusCodes.Status500InternalServerError, response);
 
@@ -55,7 +52,7 @@ namespace PureFashion.Controllers
         }
 
         [HttpGet("~/product/{productId}")]
-        public async Task<ActionResult<dtoActionResponse<dtoProductEntity?>>> GetProductDetail(int productId)
+        public async Task<ActionResult<dtoActionResponse<dtoProductEntity?>>> GetProductDetail(string productId)
         {
             dtoActionResponse<dtoProductEntity?> response = await productService.GetProductDetail(productId, await Utils.GetUser(this.HttpContext, authService));
 

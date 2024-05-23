@@ -7,6 +7,8 @@ namespace PureFashion.Models.Cart
     public class dtoProductCartData : dtoProductData
     {
         public DateTime addedDate { get; set; }
+
+        public int quantity { get; set; }
     }
 
     public class dtoCartEntity
@@ -21,6 +23,9 @@ namespace PureFashion.Models.Cart
         [BsonElement("userId")]
         [BsonRepresentation(BsonType.ObjectId)]
         public string? userId { get; set; }
+
+        [BsonElement("quantity")]
+        public int quantity { get; set; }
 
         [BsonElement("addedDate")]
         public DateTime addedDate { get; set; }

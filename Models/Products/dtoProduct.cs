@@ -33,8 +33,9 @@ namespace PureFashion.Models.Product
 
     public class dtoProductData
     {
-        [BsonElement("productId")]
-        public int productId { get; set; }
+        [BsonId]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string? productId { get; set; }
 
         [BsonElement("name")]
         public string name { get; set; } = string.Empty;
@@ -66,15 +67,12 @@ namespace PureFashion.Models.Product
 
     public class dtoProductEntity : dtoProductItem
     {
-        [BsonId]
-        [BsonRepresentation(BsonType.ObjectId)]
-        public string? id { get; set; }
-
         [BsonElement("authorId")]
         [BsonRepresentation(BsonType.ObjectId)]
         public string authorId { get; set; } = string.Empty;
 
         public List<dtoReviewEntity> reviews { get; set; } = new List<dtoReviewEntity>();
+
         public bool inCart { get; set; }
     }
 }

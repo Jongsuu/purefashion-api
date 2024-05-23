@@ -55,7 +55,8 @@ namespace PureFashion.Services.Cart
                         image = p.product.image,
                         category = p.product.category,
                         price = p.product.price,
-                        addedDate = p.addedDate
+                        addedDate = p.addedDate,
+                        quantity = p.quantity
                     })
                     .ToListAsync();
 
@@ -71,7 +72,29 @@ namespace PureFashion.Services.Cart
             return response;
         }
 
-        public async Task<dtoActionResponse<bool>> AddProductToCart(int productId, string userId)
+        public async Task<dtoActionResponse<int>> GetCartItemsCount(string userId)
+        {
+            dtoActionResponse<int> response = new dtoActionResponse<int>();
+
+            try
+            {
+                var matchFilter = Builders<dtoCartEntity>.Filter.Eq(p => p.userId, userId);
+
+                long resultsCount = await cartCollection
+                    .Find(matchFilter)
+                    .CountDocumentsAsync();
+
+                response.data = (int)resultsCount;
+            }
+            catch (Exception)
+            {
+                response.data = 0;
+            }
+
+            return response;
+        }
+
+        public async Task<dtoActionResponse<bool>> AddProductToCart(string productId, int quantity, string userId)
         {
             dtoActionResponse<bool> response = new dtoActionResponse<bool>();
 
@@ -110,6 +133,7 @@ namespace PureFashion.Services.Cart
                         category = product.category,
                         image = product.image
                     },
+                    quantity = quantity,
                     userId = userId,
                     addedDate = DateTime.UtcNow
                 };
@@ -133,7 +157,7 @@ namespace PureFashion.Services.Cart
             return response;
         }
 
-        public async Task<dtoActionResponse<bool>> RemoveProductFromCart(int productId, string userId)
+        public async Task<dtoActionResponse<bool>> RemoveProductFromCart(string productId, string userId)
         {
             dtoActionResponse<bool> response = new dtoActionResponse<bool>();
 
