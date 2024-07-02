@@ -5,6 +5,8 @@ using PureFashion.Models.DatabaseSettings;
 using PureFashion.Services.Authentication;
 using PureFashion.Models.Response;
 using PureFashion.Models.User;
+using Microsoft.AspNetCore.Authorization;
+using PureFashion.Common.Utils;
 
 namespace PureFashion.Controllers
 {
@@ -39,6 +41,26 @@ namespace PureFashion.Controllers
             dtoActionResponse<dtoUser> response = await authService.Register(userRegister);
 
             if (response.error == dtoResponseMessageCodes.USER_EXISTS)
+                return BadRequest(response);
+
+            if (response.error == dtoResponseMessageCodes.DATABASE_OPERATION || response.error == dtoResponseMessageCodes.OPERATION_NOT_PERFORMED)
+                return StatusCode(StatusCodes.Status500InternalServerError, response);
+
+            return Ok(response);
+        }
+
+        [Authorize]
+        [HttpDelete("~/user")]
+        public async Task<ActionResult<dtoActionResponse<bool>>> DeleteAccount(string password)
+        {
+            string? userId = await Utils.GetUser(this.HttpContext, authService);
+
+            if (userId == null)
+                return Unauthorized();
+
+            dtoActionResponse<bool> response = await authService.DeleteAccount(password, userId);
+
+            if (response.error == dtoResponseMessageCodes.WRONG_PASSWORD)
                 return BadRequest(response);
 
             if (response.error == dtoResponseMessageCodes.DATABASE_OPERATION || response.error == dtoResponseMessageCodes.OPERATION_NOT_PERFORMED)

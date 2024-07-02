@@ -93,9 +93,9 @@ namespace PureFashion.Services.Authentication
             return response;
         }
 
-        public async Task<dtoUserEntity?> GetUserById(string? id)
+        public async Task<dtoUserEntity?> GetUserById(string? userId)
         {
-            if (id == null)
+            if (userId == null)
                 return null;
 
             dtoUserEntity? userEntity;
@@ -103,7 +103,7 @@ namespace PureFashion.Services.Authentication
             try
             {
                 userEntity = await usersCollection
-                    .Find(item => item.id == id)
+                    .Find(item => item.id == userId)
                     .FirstOrDefaultAsync();
             }
             catch (Exception)
@@ -112,6 +112,32 @@ namespace PureFashion.Services.Authentication
             }
 
             return userEntity;
+        }
+
+        public async Task<dtoActionResponse<bool>> DeleteAccount(string password, string userId)
+        {
+            dtoUserEntity user = (await this.GetUserById(userId))!;
+            dtoActionResponse<bool> response = new dtoActionResponse<bool>();
+
+            // Wrong password
+            if (!VerifyPasswordHash(password, user.passwordHash, user.passwordSalt))
+            {
+                response.error = dtoResponseMessageCodes.WRONG_PASSWORD;
+                response.message = "The password doesn't match";
+                return response;
+            }
+
+            try
+            {
+
+            }
+            catch (Exception)
+            {
+                response.error = dtoResponseMessageCodes.DATABASE_OPERATION;
+                response.message = "We couldn't delete your account";
+            }
+
+            return response;
         }
 
         private async Task<dtoActionResponse<string?>> AddUser(dtoUserEntity user)

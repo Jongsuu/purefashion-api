@@ -69,31 +69,28 @@ namespace PureFashion.Services.Order
             return response;
         }
 
-        public async Task<dtoActionResponse<dtoOrderEntity>> GetOrderDetail(string orderId, string userId)
+        public async Task<dtoActionResponse<dtoOrderListItem>> GetOrderDetail(string orderId, string userId)
         {
-            dtoActionResponse<dtoOrderEntity> response = new dtoActionResponse<dtoOrderEntity>();
+            dtoActionResponse<dtoOrderListItem> response = new dtoActionResponse<dtoOrderListItem>();
 
             try
             {
-                var filter = PipelineStageDefinitionBuilder.Match(Builders<dtoOrderEntity>.Filter.Eq(p => p.orderId, orderId)
-                        & Builders<dtoOrderEntity>.Filter.Eq(p => p.userId, userId));
+                dtoOrderEntity? data = await ordersCollection
+                    .Find(Builders<dtoOrderEntity>.Filter.Eq(p => p.orderId, orderId)
+                        & Builders<dtoOrderEntity>.Filter.Eq(p => p.userId, userId))
+                    .FirstOrDefaultAsync();
 
-
-                var pipeline = PipelineDefinition<dtoOrderEntity, dtoOrderEntity>.Create(new[] { filter });
-
-                dtoOrderEntity? data = (await ordersCollection
-                    .AggregateAsync(pipeline))
-                    .FirstOrDefault();
-
-                if (data != null)
-                {
-
-                }
-                else
+                if (data == null)
                 {
                     response.error = dtoResponseMessageCodes.NOT_EXISTS;
                     response.message = "Selected order doesn't exist";
+                    return response;
                 }
+
+                dtoOrderProducts orderProducts = await this.GetProductsFromOrder(data.products, null);
+                data.order = orderProducts;
+
+                response.data = (dtoOrderListItem)data;
             }
             catch (Exception)
             {
@@ -177,84 +174,6 @@ namespace PureFashion.Services.Order
             return response;
         }
 
-        public async Task<dtoActionResponse<bool>> CreateOrderFromCart(string userId)
-        {
-            dtoActionResponse<bool> response = new dtoActionResponse<bool>();
-            double totalPrice = 0;
-
-            try
-            {
-                var matchFilter = Builders<dtoCartEntity>.Filter.Eq(p => p.userId, userId);
-
-                List<dtoProductCartData> cartProducts = await cartCollection
-                    .Find(matchFilter)
-                    .Project(p => new dtoProductCartData
-                    {
-                        productId = p.product.productId,
-                        price = p.product.price,
-                        quantity = p.quantity
-                    })
-                    .ToListAsync();
-
-                if (cartProducts.Count == 0)
-                {
-                    response.error = dtoResponseMessageCodes.OPERATION_NOT_PERFORMED;
-                    response.message = "You have no products in your cart";
-                    return response;
-                }
-
-                List<dtoOrderProduct> orderProducts = new List<dtoOrderProduct>();
-
-                foreach (dtoProductCartData product in cartProducts)
-                {
-                    orderProducts.Add(new dtoOrderProduct
-                    {
-                        productId = product.productId!,
-                        quantity = product.quantity,
-                    });
-
-                    totalPrice += product.quantity * product.price;
-                }
-
-                DateTime orderDate = DateTime.UtcNow;
-                DateTime deliveryDate = orderDate.AddDays(new Random().Next(1, 11));
-
-                dtoOrderEntity newOrder = new dtoOrderEntity
-                {
-                    userId = userId,
-                    products = orderProducts,
-                    orderDate = orderDate,
-                    deliveryDate = deliveryDate,
-                    status = OrderStatus.NOT_SHIPPED,
-                    total = totalPrice
-                };
-
-                await ordersCollection.InsertOneAsync(newOrder);
-
-                // Created
-                if (newOrder.orderId != null)
-                {
-                    response.data = true;
-
-                    foreach (dtoProductCartData product in cartProducts)
-                        await cartCollection.DeleteOneAsync(p => p.product.productId == product.productId && p.userId == userId);
-                }
-                // Not created
-                else
-                {
-                    response.error = dtoResponseMessageCodes.OPERATION_NOT_PERFORMED;
-                    response.message = "We couldn't create the order";
-                }
-            }
-            catch (Exception)
-            {
-                response.error = dtoResponseMessageCodes.DATABASE_OPERATION;
-                response.message = "We couldn't create the order";
-            }
-
-            return response;
-        }
-
         public async Task<dtoActionResponse<bool>> CancelOrder(string orderId, string userId)
         {
             dtoActionResponse<bool> response = new dtoActionResponse<bool>();
@@ -302,7 +221,8 @@ namespace PureFashion.Services.Order
                         productId = p.productId,
                         name = p.name,
                         price = p.price,
-                        category = p.category
+                        category = p.category,
+                        image = p.image
                     })
                     .ToListAsync();
 

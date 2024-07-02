@@ -44,14 +44,14 @@ namespace PureFashion.Controllers
 
         [Authorize]
         [HttpGet("~/order/{orderId}")]
-        public async Task<ActionResult<dtoListResponse<dtoOrderEntity>>> GetOrderDetail(string orderId)
+        public async Task<ActionResult<dtoActionResponse<dtoOrderListItem>>> GetOrderDetail(string orderId)
         {
             string? userId = await Utils.GetUser(this.HttpContext, authService);
 
             if (userId == null)
                 return Unauthorized();
 
-            dtoActionResponse<dtoOrderEntity> response = await orderService.GetOrderDetail(orderId, userId);
+            dtoActionResponse<dtoOrderListItem> response = await orderService.GetOrderDetail(orderId, userId);
 
             if (response.error == dtoResponseMessageCodes.NOT_EXISTS)
                 return NotFound(response);
@@ -72,23 +72,6 @@ namespace PureFashion.Controllers
                 return Unauthorized();
 
             dtoActionResponse<bool> response = await orderService.CreateOrder(products, userId);
-
-            if (response.error == dtoResponseMessageCodes.DATABASE_OPERATION || response.error == dtoResponseMessageCodes.OPERATION_NOT_PERFORMED)
-                return StatusCode(StatusCodes.Status500InternalServerError, response);
-
-            return Ok(response);
-        }
-
-        [Authorize]
-        [HttpPost("~/order/cart")]
-        public async Task<ActionResult<dtoActionResponse<bool>>> CreateOrderFromCart()
-        {
-            string? userId = await Utils.GetUser(this.HttpContext, authService);
-
-            if (userId == null)
-                return Unauthorized();
-
-            dtoActionResponse<bool> response = await orderService.CreateOrderFromCart(userId);
 
             if (response.error == dtoResponseMessageCodes.DATABASE_OPERATION || response.error == dtoResponseMessageCodes.OPERATION_NOT_PERFORMED)
                 return StatusCode(StatusCodes.Status500InternalServerError, response);
